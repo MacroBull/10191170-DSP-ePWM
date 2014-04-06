@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="Generator" content="Kate, the KDE Advanced Text Editor" />
+<title>core.c (2)</title>
+</head>
+<body>
+<span style="color:#888888;">0	</span><pre style='color:#000000;background-color:#ffffff;'>
+<span style="color:#888888;">1	</span>PWM_Handle myPwm1, myPwm2, myPwm3, myPwm4;
+<span style="color:#888888;">2	</span>
+<span style="color:#888888;">3	</span><b><span style='color:#1f1c1b;'>typedef</span></b> <b><span style='color:#1f1c1b;'>struct</span></b> {
+<span style="color:#888888;">4	</span>	<span style='color:#0057ae;'>int</span> PERIOD, ST_CNT, PHASE;
+<span style="color:#888888;">5	</span>	<span style='color:#0057ae;'>int</span> CMPA, CMPB;
+<span style="color:#888888;">6	</span>	PWM_Number_e NUM;
+<span style="color:#888888;">7	</span>} pwm_info;
+<span style="color:#888888;">8	</span>
+<span style="color:#888888;">9	</span><span style='color:#0057ae;'>const</span> pwm_info pwmProfiles[]={
+<span style="color:#888888;">10	</span>	{ <span style='color:#b08000;'>8000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>5000</span>, PWM_Number_1 },
+<span style="color:#888888;">11	</span>	{ <span style='color:#b08000;'>8000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>5000</span>, <span style='color:#b08000;'>0000</span>, PWM_Number_2 },
+<span style="color:#888888;">12	</span>	{ <span style='color:#b08000;'>8000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>5000</span>, <span style='color:#b08000;'>0000</span>, PWM_Number_3 },
+<span style="color:#888888;">13	</span>	{ <span style='color:#b08000;'>8000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>0000</span>, <span style='color:#b08000;'>5000</span>, <span style='color:#b08000;'>0000</span>, PWM_Number_4 }
+<span style="color:#888888;">14	</span>};
+<span style="color:#888888;">15	</span>
+<span style="color:#888888;">16	</span><span style='color:#0057ae;'>void</span> InitEPWM(PWM_Handle pwm, pwm_info pi){
+<span style="color:#888888;">17	</span>
+<span style="color:#888888;">18	</span>	CLK_enablePwmClock(myClk, pi.NUM);
+<span style="color:#888888;">19	</span>	PWM_setHighSpeedClkDiv(pwm, PWM_HspClkDiv_by_10); <span style='color:#898887;'>// Clock ratio to SYSCLKOUT</span>
+<span style="color:#888888;">20	</span><span style='color:#006e28;'>#ifdef</span><span style='color:#006e28;'> _DEBUG</span>
+<span style="color:#888888;">21	</span>	PWM_setClkDiv(pwm, PWM_ClkDiv_by_128);
+<span style="color:#888888;">22	</span><span style='color:#006e28;'>#else</span>
+<span style="color:#888888;">23	</span>	PWM_setClkDiv(pwm, PWM_ClkDiv_by_1);
+<span style="color:#888888;">24	</span><span style='color:#006e28;'>#endif</span>
+<span style="color:#888888;">25	</span>	<span style='color:#898887;'>// Setup TBCLK</span>
+<span style="color:#888888;">26	</span>	PWM_setCounterMode(pwm, PWM_CounterMode_Up); <span style='color:#898887;'>// Count up</span>
+<span style="color:#888888;">27	</span>	PWM_setPeriod(pwm, pi.PERIOD); <span style='color:#898887;'>// Set timer period</span>
+<span style="color:#888888;">28	</span>	PWM_setPhase(pwm, pi.PHASE);
+<span style="color:#888888;">29	</span>	PWM_setCount(pwm, pi.ST_CNT); <span style='color:#898887;'>// Set counter</span>
+<span style="color:#888888;">30	</span>
+<span style="color:#888888;">31	</span>	<span style='color:#898887;'>// Set Compare values</span>
+<span style="color:#888888;">32	</span>	PWM_setCmpA(pwm, pi.CMPA); <span style='color:#898887;'>// Set compare A value</span>
+<span style="color:#888888;">33	</span>	PWM_setCmpB(pwm, pi.CMPB); <span style='color:#898887;'>// Set Compare B value</span>
+<span style="color:#888888;">34	</span>
+<span style="color:#888888;">35	</span>	<span style='color:#898887;'>// Set actions</span>
+<span style="color:#888888;">36	</span>	PWM_setActionQual_Zero_PwmA(pwm, PWM_ActionQual_Set); <span style='color:#898887;'>// Set PWM1A on Zero</span>
+<span style="color:#888888;">37	</span>	PWM_setActionQual_CntUp_CmpA_PwmA(pwm, PWM_ActionQual_Clear); <span style='color:#898887;'>// Clear PWM1A on event A, up count</span>
+<span style="color:#888888;">38	</span>	PWM_setActionQual_Zero_PwmB(pwm, PWM_ActionQual_Set); <span style='color:#898887;'>// Set PWM1B on Zero</span>
+<span style="color:#888888;">39	</span>	PWM_setActionQual_CntUp_CmpB_PwmB(pwm, PWM_ActionQual_Clear); <span style='color:#898887;'>// Clear PWM1B on event B, up count</span>
+<span style="color:#888888;">40	</span>
+<span style="color:#888888;">41	</span>	<span style='color:#898887;'>// Setup shadow register load on ZERO</span>
+<span style="color:#888888;">42	</span>	PWM_setShadowMode_CmpA(pwm, PWM_ShadowMode_Shadow);
+<span style="color:#888888;">43	</span>	PWM_setShadowMode_CmpB(pwm, PWM_ShadowMode_Shadow);
+<span style="color:#888888;">44	</span>	PWM_setLoadMode_CmpA(pwm, PWM_LoadMode_Zero);
+<span style="color:#888888;">45	</span>	PWM_setLoadMode_CmpB(pwm, PWM_LoadMode_Zero);
+<span style="color:#888888;">46	</span>
+<span style="color:#888888;">47	</span>	<span style='color:#898887;'>// Interrupt where we will change the Compare Values</span>
+<span style="color:#888888;">48	</span>	PWM_setIntMode(pwm, PWM_IntMode_CounterEqualZero); <span style='color:#898887;'>// Select INT on Zero event</span>
+<span style="color:#888888;">49	</span>	PWM_enableInt(pwm); <span style='color:#898887;'>// Enable INT</span>
+<span style="color:#888888;">50	</span>
+<span style="color:#888888;">51	</span>}
+<span style="color:#888888;">52	</span><span style='color:#0057ae;'>void</span> main(<span style='color:#0057ae;'>void</span>)
+<span style="color:#888888;">53	</span>{
+<span style="color:#888888;">54	</span>	<span style='color:#898887;'>// Initialize all the handles</span>
+<span style="color:#888888;">55	</span>    myClk = CLK_init((<span style='color:#0057ae;'>void</span> *)CLK_BASE_ADDR, <b><span style='color:#1f1c1b;'>sizeof</span></b>(CLK_Obj));
+<span style="color:#888888;">56	</span>    myGpio = GPIO_init((<span style='color:#0057ae;'>void</span> *)GPIO_BASE_ADDR, <b><span style='color:#1f1c1b;'>sizeof</span></b>(GPIO_Obj));
+<span style="color:#888888;">57	</span>    myCpu = CPU_init((<span style='color:#0057ae;'>void</span> *)NULL, <b><span style='color:#1f1c1b;'>sizeof</span></b>(CPU_Obj));
+<span style="color:#888888;">58	</span>
+<span style="color:#888888;">59	</span>    initSysCtrl();
+<span style="color:#888888;">60	</span>    initGPIO();
+<span style="color:#888888;">61	</span>
+<span style="color:#888888;">62	</span>    <span style='color:#898887;'>// Initialize ePWMs</span>
+<span style="color:#888888;">63	</span>    CLK_disableTbClockSync(myClk);
+<span style="color:#888888;">64	</span>
+<span style="color:#888888;">65	</span>	myPwm1 = PWM_init((<span style='color:#0057ae;'>void</span> *)PWM_ePWM1_BASE_ADDR, <b><span style='color:#1f1c1b;'>sizeof</span></b>(PWM_Obj));
+<span style="color:#888888;">66	</span>	myPwm2 = PWM_init((<span style='color:#0057ae;'>void</span> *)PWM_ePWM2_BASE_ADDR, <b><span style='color:#1f1c1b;'>sizeof</span></b>(PWM_Obj));
+<span style="color:#888888;">67	</span>	myPwm3 = PWM_init((<span style='color:#0057ae;'>void</span> *)PWM_ePWM3_BASE_ADDR, <b><span style='color:#1f1c1b;'>sizeof</span></b>(PWM_Obj));
+<span style="color:#888888;">68	</span>	myPwm4 = PWM_init((<span style='color:#0057ae;'>void</span> *)PWM_ePWM4_BASE_ADDR, <b><span style='color:#1f1c1b;'>sizeof</span></b>(PWM_Obj));
+<span style="color:#888888;">69	</span>
+<span style="color:#888888;">70	</span>    InitEPWM(myPwm1, pwmProfiles[<span style='color:#b08000;'>0</span>]);
+<span style="color:#888888;">71	</span>    InitEPWM(myPwm2, pwmProfiles[<span style='color:#b08000;'>1</span>]);
+<span style="color:#888888;">72	</span>    InitEPWM(myPwm3, pwmProfiles[<span style='color:#b08000;'>2</span>]);
+<span style="color:#888888;">73	</span>    InitEPWM(myPwm4, pwmProfiles[<span style='color:#b08000;'>3</span>]);
+<span style="color:#888888;">74	</span>    CLK_enableTbClockSync(myClk);
+<span style="color:#888888;">75	</span>
+<span style="color:#888888;">76	</span>    CPU_enableDebugInt(myCpu);
+<span style="color:#888888;">77	</span>
+<span style="color:#888888;">78	</span>    <span style='color:#898887;'>// Create phase shift</span>
+<span style="color:#888888;">79	</span>    PWM_setCount(myPwm2, ((PWM_Obj *)myPwm1)-&gt;TBCTR - <span style='color:#b08000;'>2000</span>);
+<span style="color:#888888;">80	</span>    PWM_setCount(myPwm3, ((PWM_Obj *)myPwm1)-&gt;TBCTR - <span style='color:#b08000;'>4000</span>);
+<span style="color:#888888;">81	</span>    PWM_setCount(myPwm4, ((PWM_Obj *)myPwm1)-&gt;TBCTR - <span style='color:#b08000;'>6000</span>);
+<span style="color:#888888;">82	</span>
+<span style="color:#888888;">83	</span>    <b><span style='color:#1f1c1b;'>for</span></b>(;;) ;
+<span style="color:#888888;">84	</span>}</pre>
+<span style="color:#888888;">85	</span></body>
+</html>
